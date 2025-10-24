@@ -5,6 +5,7 @@ import { Header } from '@/components/trading/Header';
 import { ParticleBackground } from '@/components/effects/ParticleBackground';
 import { CryptoPayment } from '@/components/web3/CryptoPayment';
 import { SwapInterface } from '@/components/web3/SwapInterface';
+import { WalletButton } from '@/components/web3/WalletButton';
 import { Watchlist } from '@/components/trading/Watchlist';
 import { PriceDisplay } from '@/components/trading/PriceDisplay';
 import { TradeFeed } from '@/components/trading/TradeFeed';
@@ -252,6 +253,7 @@ const Index = () => {
 
           {/* Right Sidebar */}
           <aside className="glass-panel space-y-4 rounded-2xl p-5 shadow-2xl transition-all duration-300 hover:shadow-primary/10 animate-slide-in-right">
+            <WalletButton />
             <OrderPanel />
             <AdvancedOrderTypes />
             <PortfolioTracker />
