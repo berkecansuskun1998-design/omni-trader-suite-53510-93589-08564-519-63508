@@ -32,6 +32,11 @@ import { OrderPanel } from '@/components/trading/OrderPanel';
 import { LiquidityZones } from '@/components/trading/LiquidityZones';
 import { HotkeyPanel } from '@/components/trading/HotkeyPanel';
 import { TradeJournal } from '@/components/trading/TradeJournal';
+import { DrawingTools } from '@/components/trading/DrawingTools';
+import { SocialTrading } from '@/components/trading/SocialTrading';
+import { AutoTradingSignals } from '@/components/trading/AutoTradingSignals';
+import { MultiChartLayout } from '@/components/trading/MultiChartLayout';
+import { AdvancedOrderTypes } from '@/components/trading/AdvancedOrderTypes';
 import { Exchange, DataSource, IndicatorSettings, Timeframe } from '@/types/trading';
 import { getExchangeDefaults } from '@/lib/exchanges';
 import { useTradingData } from '@/hooks/useTradingData';
@@ -179,6 +184,10 @@ const Index = () => {
               onChange={setTimeframe}
             />
             
+            <MultiChartLayout />
+            
+            <DrawingTools />
+            
             <IndicatorControls
               settings={indicatorSettings}
               onApply={handleApplyIndicators}
@@ -244,7 +253,10 @@ const Index = () => {
           {/* Right Sidebar */}
           <aside className="glass-panel space-y-4 rounded-2xl p-5 shadow-2xl transition-all duration-300 hover:shadow-primary/10 animate-slide-in-right">
             <OrderPanel />
+            <AdvancedOrderTypes />
             <PortfolioTracker />
+            <AutoTradingSignals />
+            <SocialTrading />
             <MarketScanner />
             <MarketSentiment />
             <PriceAlerts />
