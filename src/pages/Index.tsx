@@ -21,6 +21,11 @@ import { DepthChart } from '@/components/trading/DepthChart';
 import { QuickStats } from '@/components/trading/QuickStats';
 import { TimeframeSelector } from '@/components/trading/TimeframeSelector';
 import { CandlestickPatterns } from '@/components/trading/CandlestickPatterns';
+import { Heatmap } from '@/components/trading/Heatmap';
+import { PriceAlerts } from '@/components/trading/PriceAlerts';
+import { RiskCalculator } from '@/components/trading/RiskCalculator';
+import { EconomicCalendar } from '@/components/trading/EconomicCalendar';
+import { MarketSentiment } from '@/components/trading/MarketSentiment';
 import { Exchange, DataSource, IndicatorSettings, Timeframe } from '@/types/trading';
 import { getExchangeDefaults } from '@/lib/exchanges';
 import { useTradingData } from '@/hooks/useTradingData';
@@ -192,6 +197,8 @@ const Index = () => {
 
           {/* Main Chart Area */}
           <main className="glass-panel space-y-4 rounded-2xl p-5 shadow-2xl animate-scale-in">
+            <Heatmap />
+            
             <PriceDisplay
               symbol={symbol}
               price={lastPrice}
@@ -230,6 +237,10 @@ const Index = () => {
 
           {/* Right Sidebar */}
           <aside className="glass-panel space-y-4 rounded-2xl p-5 shadow-2xl transition-all duration-300 hover:shadow-primary/10 animate-slide-in-right">
+            <MarketSentiment />
+            <PriceAlerts />
+            <RiskCalculator />
+            <EconomicCalendar />
             <SwapInterface />
             <CryptoPayment />
             <MarketSummary exchange={exchange} symbol={symbol} />
