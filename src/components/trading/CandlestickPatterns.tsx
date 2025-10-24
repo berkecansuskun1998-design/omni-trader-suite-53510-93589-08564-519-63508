@@ -1,81 +1,51 @@
-import { TrendingUp, TrendingDown, Circle } from 'lucide-react';
 import { CandlestickPattern } from '@/types/trading';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { TrendingUp, TrendingDown, Minus, Sparkles } from 'lucide-react';
 
 interface CandlestickPatternsProps {
   patterns: CandlestickPattern[];
 }
 
-export function CandlestickPatterns({ patterns }: CandlestickPatternsProps) {
-  const recentPatterns = patterns.slice(-10).reverse();
-  
-  const getSignalColor = (signal: string) => {
-    if (signal === 'bullish') return 'text-success';
-    if (signal === 'bearish') return 'text-destructive';
-    return 'text-muted-foreground';
-  };
-  
-  const getSignalIcon = (signal: string) => {
-    if (signal === 'bullish') return <TrendingUp className="h-4 w-4" />;
-    if (signal === 'bearish') return <TrendingDown className="h-4 w-4" />;
-    return <Circle className="h-4 w-4" />;
-  };
-  
+export const CandlestickPatterns = ({ patterns }: CandlestickPatternsProps) => {
+  if (patterns.length === 0) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-chart-2" />
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Patterns</h3>
+        </div>
+        <div className="text-sm text-muted-foreground p-3 rounded-lg bg-muted/20">No patterns detected</div>
+      </div>
+    );
+  }
+
+  const getIcon = (type: string) => type === 'bullish' ? TrendingUp : type === 'bearish' ? TrendingDown : Minus;
+  const getColor = (type: string) => type === 'bullish' ? 'text-success bg-success/10 border-success/20' : type === 'bearish' ? 'text-destructive bg-destructive/10 border-destructive/20' : 'text-muted-foreground bg-muted/20 border-muted/20';
+
   return (
-    <div className="glass-panel rounded-xl p-4">
-      <h4 className="mb-3 text-sm font-bold text-foreground">
-        Candlestick Patterns
-      </h4>
-      
-      <ScrollArea className="h-[200px]">
-        {recentPatterns.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-            No patterns detected
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {recentPatterns.map((pattern, idx) => (
-              <div
-                key={idx}
-                className="group rounded-lg border border-border/50 bg-black/20 p-3 transition-all hover:border-primary/50"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={getSignalColor(pattern.signal)}>
-                      {getSignalIcon(pattern.signal)}
-                    </div>
-                    <span className="text-sm font-semibold text-foreground">
-                      {pattern.name}
-                    </span>
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Sparkles className="w-4 h-4 text-chart-2" />
+        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Patterns</h3>
+      </div>
+      <div className="space-y-2">
+        {patterns.slice(0, 5).map((pattern, i) => {
+          const Icon = getIcon(pattern.type);
+          return (
+            <div key={i} className={`p-3 rounded-lg border ${getColor(pattern.type)} transition-all hover:scale-105`}>
+              <div className="flex items-center gap-3">
+                <Icon className="w-4 h-4 flex-shrink-0" />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{pattern.name}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-background/50 uppercase">{(pattern.strength * 100).toFixed(0)}%</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-16 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className={`h-full ${
-                          pattern.signal === 'bullish'
-                            ? 'bg-success'
-                            : pattern.signal === 'bearish'
-                            ? 'bg-destructive'
-                            : 'bg-muted-foreground'
-                        }`}
-                        style={{ width: `${pattern.strength * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{new Date(pattern.timestamp).toLocaleTimeString()}</span>
-                  <span>•</span>
-                  <span className="capitalize">{pattern.signal}</span>
-                  <span>•</span>
-                  <span>{Math.round(pattern.strength * 100)}% confidence</span>
+                  <div className="text-xs text-muted-foreground mt-1 capitalize">{pattern.type} signal</div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </ScrollArea>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
-}
+};

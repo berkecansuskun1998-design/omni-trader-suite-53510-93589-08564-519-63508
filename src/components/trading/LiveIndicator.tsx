@@ -1,11 +1,11 @@
-export function LiveIndicator() {
+export const LiveIndicator = () => {
   return (
     <div className="flex items-center gap-2">
-      <div className="relative flex h-2 w-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-success shadow-lg shadow-success/50" />
+      <div className="relative">
+        <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
+        <div className="absolute inset-0 w-2 h-2 bg-success rounded-full animate-ping opacity-75" />
       </div>
-      <span className="text-xs font-semibold text-success">LIVE</span>
+      <span className="text-xs font-medium text-success uppercase tracking-wider">Live</span>
     </div>
   );
-}
+};
