@@ -67,8 +67,11 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    background: radial-gradient(ellipse at top, hsl(222 47% 6%), hsl(222 47% 3%)),
-                radial-gradient(ellipse at bottom, hsl(187 100% 10% / 0.05), transparent);
+    background: 
+      radial-gradient(ellipse at top left, hsl(187 100% 15% / 0.15), transparent 50%),
+      radial-gradient(ellipse at top right, hsl(280 80% 15% / 0.15), transparent 50%),
+      radial-gradient(ellipse at bottom, hsl(187 100% 10% / 0.1), transparent),
+      linear-gradient(180deg, hsl(222 47% 3%), hsl(222 47% 5%));
     min-height: 100vh;
     overflow-x: hidden;
   }

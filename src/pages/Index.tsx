@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/trading/Header';
+import { ParticleBackground } from '@/components/effects/ParticleBackground';
+import { CryptoPayment } from '@/components/web3/CryptoPayment';
+import { SwapInterface } from '@/components/web3/SwapInterface';
 import { Watchlist } from '@/components/trading/Watchlist';
 import { PriceDisplay } from '@/components/trading/PriceDisplay';
 import { TradeFeed } from '@/components/trading/TradeFeed';
@@ -23,6 +28,16 @@ import { detectCandlestickPatterns } from '@/lib/indicators';
 import { toast } from 'sonner';
 
 const Index = () => {
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate('/auth');
+      }
+    });
+  }, [navigate]);
+
   const [exchange, setExchange] = useState<Exchange>(
     (localStorage.getItem('omni_exchange') as Exchange) || 'BINANCE'
   );
@@ -125,8 +140,9 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen p-4 animate-fade-in">
-      <div className="mx-auto max-w-[1800px] space-y-4">
+    <div className="relative min-h-screen p-4 animate-fade-in">
+      <ParticleBackground />
+      <div className="relative z-10 mx-auto max-w-[1800px] space-y-4">
         <Header
           exchange={exchange}
           symbol={symbol}
@@ -214,6 +230,8 @@ const Index = () => {
 
           {/* Right Sidebar */}
           <aside className="glass-panel space-y-4 rounded-2xl p-5 shadow-2xl transition-all duration-300 hover:shadow-primary/10 animate-slide-in-right">
+            <SwapInterface />
+            <CryptoPayment />
             <MarketSummary exchange={exchange} symbol={symbol} />
             <NewsFeed />
           </aside>

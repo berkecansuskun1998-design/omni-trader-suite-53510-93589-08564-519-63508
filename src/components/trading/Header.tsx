@@ -1,8 +1,13 @@
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, LogIn } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Exchange, DataSource } from '@/types/trading';
 import { EXCHANGES } from '@/lib/exchanges';
+import { WalletButton } from '@/components/web3/WalletButton';
+import { useAccount } from 'wagmi';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from 'react';
 
 interface HeaderProps {
   exchange: Exchange;
@@ -25,6 +30,23 @@ export function Header({
   onSourceChange,
   onRefresh,
 }: HeaderProps) {
+  const { isConnected } = useAccount();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <header className="group relative flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card/60 to-card/30 p-5 shadow-xl backdrop-blur-xl transition-all duration-300 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/10">
       <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
@@ -94,6 +116,17 @@ export function Header({
         <Button onClick={onRefresh} size="sm" variant="outline">
           <RefreshCw className="h-4 w-4" />
         </Button>
+
+        {isConnected && <WalletButton />}
+        
+        {!user && (
+          <Link to="/auth">
+            <Button size="sm" className="bg-gradient-to-r from-primary to-chart-2">
+              <LogIn className="mr-2 h-4 w-4" />
+              Sign In
+            </Button>
+          </Link>
+        )}
       </div>
     </header>
   );
