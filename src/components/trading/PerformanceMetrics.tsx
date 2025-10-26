@@ -90,35 +90,43 @@ export function PerformanceMetrics({ candles, currentPrice, symbol }: Performanc
   ];
 
   return (
-    <div className="space-y-3">
-      <h4 className="flex items-center gap-2 text-sm font-bold text-foreground">
-        <Activity className="h-4 w-4 text-primary" />
-        Performance Metrics
-      </h4>
+    <div className="space-y-5">
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 ring-2 ring-primary/35 shadow-lg shadow-primary/20">
+          <Activity className="h-5 w-5 text-primary animate-pulse" />
+        </div>
+        <div>
+          <h4 className="text-sm font-black text-foreground uppercase tracking-wide">Performance Matrix</h4>
+          <p className="text-[9px] text-muted-foreground font-mono">Advanced market analytics</p>
+        </div>
+      </div>
       
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         {metrics.map((metric, idx) => {
           const Icon = metric.icon;
           return (
             <div
               key={idx}
-              className="group glass-panel animate-fade-in rounded-xl p-3 transition-all duration-300 hover:scale-105 hover:border-primary/30"
+              className="group relative overflow-hidden rounded-xl border-2 border-border/40 bg-gradient-to-br from-card to-card/70 p-4 backdrop-blur-xl transition-all duration-500 hover:scale-[1.03] hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/10 animate-fade-in-up"
               style={{ animationDelay: `${idx * 50}ms` }}
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="text-xs font-medium text-muted-foreground">
+              <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              
+              <div className="relative z-10 flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-2">
                     {metric.label}
                   </div>
-                  <div className={`mt-1 font-mono text-lg font-bold ${metric.color}`}>
+                  <div className={`font-mono text-xl font-black ${metric.color} drop-shadow-[0_0_8px_rgba(56,189,248,0.3)] mb-1`}>
                     {metric.value}
                   </div>
-                  <div className="mt-0.5 text-xs text-muted-foreground">
+                  <div className="text-[10px] text-muted-foreground font-mono font-bold">
                     {metric.subValue}
                   </div>
                 </div>
-                <div className={`rounded-lg ${metric.bgColor} p-2`}>
-                  <Icon className={`h-4 w-4 ${metric.color}`} />
+                <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${metric.bgColor} ring-2 ring-${metric.color.replace('text-', '')}/30 shadow-lg`}>
+                  <Icon className={`h-5 w-5 ${metric.color}`} />
                 </div>
               </div>
             </div>
