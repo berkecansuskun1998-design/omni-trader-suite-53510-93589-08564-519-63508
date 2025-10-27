@@ -143,6 +143,119 @@ export type Database = {
         }
         Relationships: []
       }
+      trading_orders: {
+        Row: {
+          created_at: string | null
+          filled_quantity: number | null
+          id: string
+          leverage: number | null
+          order_type: string
+          position_id: string | null
+          price: number | null
+          quantity: number
+          side: string
+          status: string | null
+          symbol: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          filled_quantity?: number | null
+          id?: string
+          leverage?: number | null
+          order_type: string
+          position_id?: string | null
+          price?: number | null
+          quantity: number
+          side: string
+          status?: string | null
+          symbol: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          filled_quantity?: number | null
+          id?: string
+          leverage?: number | null
+          order_type?: string
+          position_id?: string | null
+          price?: number | null
+          quantity?: number
+          side?: string
+          status?: string | null
+          symbol?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trading_orders_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "user_positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_positions: {
+        Row: {
+          closed_at: string | null
+          created_at: string | null
+          current_price: number | null
+          entry_price: number
+          id: string
+          leverage: number | null
+          opened_at: string | null
+          quantity: number
+          realized_pnl: number | null
+          side: string
+          status: string | null
+          stop_loss: number | null
+          symbol: string
+          take_profit: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string | null
+          current_price?: number | null
+          entry_price: number
+          id?: string
+          leverage?: number | null
+          opened_at?: string | null
+          quantity: number
+          realized_pnl?: number | null
+          side: string
+          status?: string | null
+          stop_loss?: number | null
+          symbol: string
+          take_profit?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string | null
+          current_price?: number | null
+          entry_price?: number
+          id?: string
+          leverage?: number | null
+          opened_at?: string | null
+          quantity?: number
+          realized_pnl?: number | null
+          side?: string
+          status?: string | null
+          stop_loss?: number | null
+          symbol?: string
+          take_profit?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -160,6 +273,30 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_watchlist: {
+        Row: {
+          added_at: string | null
+          id: string
+          is_favorite: boolean | null
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          symbol?: string
           user_id?: string
         }
         Relationships: []

@@ -3,6 +3,9 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { TrendingUp, TrendingDown, Activity, Star, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { useRealTimePrice } from '@/hooks/useRealTimePrice';
+import { toast } from 'sonner';
 
 interface WatchlistProps {
   symbols: string[];
@@ -21,34 +24,95 @@ interface SymbolData {
 export function Watchlist({ symbols, activeSymbol, onSymbolClick }: WatchlistProps) {
   const [symbolsData, setSymbolsData] = useState<SymbolData[]>([]);
   const [showAll, setShowAll] = useState(false);
+  const [userWatchlist, setUserWatchlist] = useState<Set<string>>(new Set());
+  
+  const { prices, getPrice } = useRealTimePrice(symbols);
 
   useEffect(() => {
-    // Simulate real-time price updates
-    const mockData: SymbolData[] = symbols.map(symbol => ({
-      symbol,
-      price: Math.random() * 70000 + 10000,
-      change24h: (Math.random() - 0.5) * 10,
-      volume: Math.random() * 1000000000,
-      isFavorite: Math.random() > 0.7,
-    }));
-    setSymbolsData(mockData);
+    fetchUserWatchlist();
+  }, []);
 
-    const interval = setInterval(() => {
-      setSymbolsData(prev => prev.map(s => ({
-        ...s,
-        price: s.price * (1 + (Math.random() - 0.5) * 0.001),
-        change24h: s.change24h + (Math.random() - 0.5) * 0.1,
-      })));
-    }, 3000);
+  const fetchUserWatchlist = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    return () => clearInterval(interval);
-  }, [symbols]);
+      const { data, error } = await supabase
+        .from('user_watchlist')
+        .select('symbol, is_favorite')
+        .eq('user_id', user.id);
 
-  const toggleFavorite = (symbol: string, e: React.MouseEvent) => {
+      if (error) throw error;
+
+      const watchlistSymbols = new Set(data?.filter(w => w.is_favorite).map(w => w.symbol) || []);
+      setUserWatchlist(watchlistSymbols);
+    } catch (error) {
+      console.error('Error fetching watchlist:', error);
+    }
+  };
+
+  useEffect(() => {
+    // Update symbols data with real-time prices
+    const data: SymbolData[] = symbols.map(symbol => {
+      const priceData = getPrice(symbol);
+      return {
+        symbol,
+        price: priceData?.price || 0,
+        change24h: priceData?.change24h || 0,
+        volume: priceData?.volume || 0,
+        isFavorite: userWatchlist.has(symbol),
+      };
+    });
+    setSymbolsData(data);
+  }, [symbols, prices, userWatchlist, getPrice]);
+
+  const toggleFavorite = async (symbol: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setSymbolsData(prev => prev.map(s => 
-      s.symbol === symbol ? { ...s, isFavorite: !s.isFavorite } : s
-    ));
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Please login to add favorites');
+        return;
+      }
+
+      const isFavorite = userWatchlist.has(symbol);
+
+      if (isFavorite) {
+        // Remove from favorites
+        const { error } = await supabase
+          .from('user_watchlist')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('symbol', symbol);
+
+        if (error) throw error;
+
+        setUserWatchlist(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(symbol);
+          return newSet;
+        });
+        toast.success(`${symbol} removed from favorites`);
+      } else {
+        // Add to favorites
+        const { error } = await supabase
+          .from('user_watchlist')
+          .insert({
+            user_id: user.id,
+            symbol,
+            is_favorite: true,
+          });
+
+        if (error) throw error;
+
+        setUserWatchlist(prev => new Set(prev).add(symbol));
+        toast.success(`${symbol} added to favorites`);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error('Failed to update favorites');
+    }
   };
 
   const displayedSymbols = showAll ? symbolsData : symbolsData.slice(0, 6);

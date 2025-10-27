@@ -308,7 +308,7 @@ const Index = () => {
           <aside className="glass-panel space-y-4 rounded-2xl p-5 shadow-2xl transition-all duration-300 hover:shadow-primary/10 animate-slide-in-right">
             <BuyOmni99 />
             <WalletButton />
-            <OrderPanel />
+            <OrderPanel symbol={symbol} currentPrice={lastPrice} />
             <AdvancedOrderTypes />
             <PortfolioTracker />
             <AutoTradingSignals />

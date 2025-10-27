@@ -1,8 +1,11 @@
-import { useState } from 'react';
-import { Wallet, TrendingUp, TrendingDown, PieChart, DollarSign, BarChart3, Target, Activity } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Wallet, TrendingUp, TrendingDown, PieChart, DollarSign, BarChart3, Target, Activity, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '@/integrations/supabase/client';
+import { useRealTimePrice } from '@/hooks/useRealTimePrice';
+import { toast } from 'sonner';
 
 interface Position {
   id: string;
@@ -11,14 +14,86 @@ interface Position {
   current: number;
   quantity: number;
   side: 'long' | 'short';
+  leverage: number;
+  stop_loss?: number;
+  take_profit?: number;
 }
 
 export const PortfolioTracker = () => {
-  const [positions] = useState<Position[]>([
-    { id: '1', symbol: 'BTC', entry: 65000, current: 67500, quantity: 0.5, side: 'long' },
-    { id: '2', symbol: 'ETH', entry: 3200, current: 3150, quantity: 2, side: 'long' },
-    { id: '3', symbol: 'SOL', entry: 145, current: 158, quantity: 10, side: 'long' },
-  ]);
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const symbols = positions.map(p => p.symbol);
+  const { prices, getPrice } = useRealTimePrice(symbols);
+
+  const fetchPositions = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('user_positions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'open')
+        .order('opened_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedPositions: Position[] = (data || []).map(pos => ({
+        id: pos.id,
+        symbol: pos.symbol,
+        entry: parseFloat(String(pos.entry_price)),
+        current: parseFloat(String(pos.current_price || pos.entry_price)),
+        quantity: parseFloat(String(pos.quantity)),
+        side: pos.side as 'long' | 'short',
+        leverage: pos.leverage || 1,
+        stop_loss: pos.stop_loss ? parseFloat(String(pos.stop_loss)) : undefined,
+        take_profit: pos.take_profit ? parseFloat(String(pos.take_profit)) : undefined,
+      }));
+
+      setPositions(formattedPositions);
+    } catch (error) {
+      console.error('Error fetching positions:', error);
+      toast.error('Failed to load positions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPositions();
+
+    // Subscribe to position changes
+    const channel = supabase
+      .channel('position_changes')
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_positions',
+        },
+        () => {
+          fetchPositions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Update current prices from real-time data
+  useEffect(() => {
+    if (positions.length > 0 && prices.size > 0) {
+      setPositions(prev => prev.map(pos => {
+        const priceData = getPrice(pos.symbol);
+        return priceData ? { ...pos, current: priceData.price } : pos;
+      }));
+    }
+  }, [prices, getPrice]);
 
   const calculatePnL = (pos: Position) => {
     const diff = pos.side === 'long' 
@@ -45,6 +120,26 @@ export const PortfolioTracker = () => {
     calculatePnLPercent(pos) < calculatePnLPercent(worst) ? pos : worst
   );
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <RefreshCw className="w-6 h-6 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  if (positions.length === 0) {
+    return (
+      <div className="text-center p-8 space-y-3">
+        <Wallet className="w-12 h-12 text-muted-foreground mx-auto" />
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">No Open Positions</h3>
+          <p className="text-xs text-muted-foreground mt-1">Place your first order to start trading</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Tabs defaultValue="overview" className="space-y-4">
       <div className="flex items-center justify-between">
@@ -52,7 +147,12 @@ export const PortfolioTracker = () => {
           <Wallet className="w-4 h-4 text-chart-4" />
           <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Portfolio Tracker</h3>
         </div>
-        <Activity className="w-4 h-4 text-success animate-pulse" />
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={fetchPositions}>
+            <RefreshCw className="w-3 h-3" />
+          </Button>
+          <Activity className="w-4 h-4 text-success animate-pulse" />
+        </div>
       </div>
 
       <TabsList className="grid w-full grid-cols-3">

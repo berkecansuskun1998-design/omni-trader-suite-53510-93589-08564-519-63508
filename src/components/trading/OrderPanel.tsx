@@ -5,31 +5,107 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export const OrderPanel = () => {
+interface OrderPanelProps {
+  symbol?: string;
+  currentPrice?: number;
+}
+
+export const OrderPanel = ({ symbol = 'BTC', currentPrice = 0 }: OrderPanelProps) => {
   const [orderType, setOrderType] = useState('limit');
   const [side, setSide] = useState<'buy' | 'sell'>('buy');
   const [price, setPrice] = useState('');
   const [quantity, setQuantity] = useState('');
+  const [leverage, setLeverage] = useState('1');
   const [stopLoss, setStopLoss] = useState('');
   const [takeProfit, setTakeProfit] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const placeOrder = () => {
-    if (!price || !quantity) {
-      toast.error('Please fill in price and quantity');
+  const placeOrder = async () => {
+    if (orderType !== 'market' && (!price || parseFloat(price) <= 0)) {
+      toast.error('Please enter a valid price');
       return;
     }
 
-    toast.success(`${side.toUpperCase()} order placed!`, {
-      description: `${orderType.toUpperCase()}: ${quantity} @ $${price}`,
-    });
+    if (!quantity || parseFloat(quantity) <= 0) {
+      toast.error('Please enter a valid quantity');
+      return;
+    }
 
-    // Reset form
-    setPrice('');
-    setQuantity('');
-    setStopLoss('');
-    setTakeProfit('');
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error('Please login to place orders');
+        return;
+      }
+
+      const orderPrice = orderType === 'market' ? currentPrice : parseFloat(price);
+      const orderQuantity = parseFloat(quantity);
+      const orderLeverage = parseInt(leverage) || 1;
+
+      // Create order
+      const { data: order, error: orderError } = await supabase
+        .from('trading_orders')
+        .insert({
+          user_id: user.id,
+          symbol,
+          side,
+          order_type: orderType,
+          quantity: orderQuantity,
+          price: orderPrice,
+          leverage: orderLeverage,
+          status: orderType === 'market' ? 'filled' : 'pending',
+          filled_quantity: orderType === 'market' ? orderQuantity : 0,
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // For market orders, create position immediately
+      if (orderType === 'market') {
+        const { error: positionError } = await supabase
+          .from('user_positions')
+          .insert({
+            user_id: user.id,
+            symbol,
+            side,
+            entry_price: orderPrice,
+            quantity: orderQuantity,
+            current_price: orderPrice,
+            leverage: orderLeverage,
+            stop_loss: stopLoss ? parseFloat(stopLoss) : null,
+            take_profit: takeProfit ? parseFloat(takeProfit) : null,
+            status: 'open',
+          });
+
+        if (positionError) throw positionError;
+
+        toast.success(`${side.toUpperCase()} position opened!`, {
+          description: `${quantity} ${symbol} @ $${orderPrice.toFixed(2)}`,
+        });
+      } else {
+        toast.success(`${side.toUpperCase()} ${orderType} order placed!`, {
+          description: `${quantity} ${symbol} @ $${price}`,
+        });
+      }
+
+      // Reset form
+      setPrice('');
+      setQuantity('');
+      setStopLoss('');
+      setTakeProfit('');
+      setLeverage('1');
+    } catch (error) {
+      console.error('Error placing order:', error);
+      toast.error('Failed to place order');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -131,6 +207,7 @@ export const OrderPanel = () => {
             <Label className="text-xs text-muted-foreground">Quantity</Label>
             <Input
               type="number"
+              step="0.00000001"
               placeholder="0.00"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
@@ -143,12 +220,29 @@ export const OrderPanel = () => {
                   variant="outline"
                   size="sm"
                   className="flex-1 h-7 text-xs"
-                  onClick={() => setQuantity((1000 * (pct / 100)).toString())}
+                  onClick={() => setQuantity((1 * (pct / 100)).toFixed(8))}
                 >
                   {pct}%
                 </Button>
               ))}
             </div>
+          </div>
+
+          {/* Leverage Input */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Leverage</Label>
+            <Select value={leverage} onValueChange={setLeverage}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[1, 2, 3, 5, 10, 20, 50, 100].map((lev) => (
+                  <SelectItem key={lev} value={lev.toString()}>
+                    {lev}x
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Advanced Risk Management */}
@@ -219,7 +313,8 @@ export const OrderPanel = () => {
           {/* Ultra-Elite Execution Button */}
           <Button
             onClick={placeOrder}
-            className={`relative w-full h-14 font-black text-base uppercase tracking-widest transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] overflow-hidden rounded-xl ${
+            disabled={loading}
+            className={`relative w-full h-14 font-black text-base uppercase tracking-widest transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] overflow-hidden rounded-xl disabled:opacity-50 disabled:cursor-not-allowed ${
               side === 'buy'
                 ? 'bg-gradient-to-r from-success via-success to-success/80 hover:from-success/90 hover:to-success/70 text-white shadow-2xl shadow-success/40 hover:shadow-[0_0_50px_rgba(16,185,129,0.5)] ring-2 ring-success/50'
                 : 'bg-gradient-to-r from-destructive via-destructive to-destructive/80 hover:from-destructive/90 hover:to-destructive/70 text-white shadow-2xl shadow-destructive/40 hover:shadow-[0_0_50px_rgba(239,68,68,0.5)] ring-2 ring-destructive/50'
@@ -227,18 +322,24 @@ export const OrderPanel = () => {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
             <div className="relative z-10 flex items-center justify-center gap-3">
-              {side === 'buy' ? (
-                <>
-                  <TrendingUp className="w-6 h-6" />
-                  <span>EXECUTE BUY {orderType.toUpperCase()}</span>
-                </>
+              {loading ? (
+                <span>PROCESSING...</span>
               ) : (
                 <>
-                  <TrendingDown className="w-6 h-6" />
-                  <span>EXECUTE SELL {orderType.toUpperCase()}</span>
+                  {side === 'buy' ? (
+                    <>
+                      <TrendingUp className="w-6 h-6" />
+                      <span>EXECUTE BUY {orderType.toUpperCase()}</span>
+                    </>
+                  ) : (
+                    <>
+                      <TrendingDown className="w-6 h-6" />
+                      <span>EXECUTE SELL {orderType.toUpperCase()}</span>
+                    </>
+                  )}
+                  <Zap className="w-5 h-5 animate-pulse" />
                 </>
               )}
-              <Zap className="w-5 h-5 animate-pulse" />
             </div>
           </Button>
         </TabsContent>
