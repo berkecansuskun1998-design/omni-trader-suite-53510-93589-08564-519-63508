@@ -3,7 +3,7 @@ import ReactApexChart from 'react-apexcharts';
 import { ApexOptions } from 'apexcharts';
 import { Exchange } from '@/types/trading';
 import { EXCHANGES } from '@/lib/exchanges';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Activity } from 'lucide-react';
 
 interface DepthChartProps {
   exchange: Exchange;
@@ -202,22 +202,33 @@ export function DepthChart({ exchange, symbol }: DepthChartProps) {
   };
 
   return (
-    <div className="glass-panel animate-fade-in rounded-xl p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h4 className="text-sm font-bold text-foreground">Market Depth</h4>
-        <div className="flex items-center gap-2 text-xs">
-          <div className="flex items-center gap-1">
-            <div className="h-2 w-2 rounded-full bg-success" />
-            <span className="text-muted-foreground">Bids</span>
+    <div className="relative glass-panel animate-fade-in rounded-xl p-5 border border-border/50 overflow-hidden">
+      <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl" />
+      <div className="relative z-10">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10 backdrop-blur-sm">
+              <Activity className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-foreground">Elite Market Depth</h4>
+              <p className="text-xs text-muted-foreground">Real-time order book visualization</p>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="h-2 w-2 rounded-full bg-destructive" />
-            <span className="text-muted-foreground">Asks</span>
+          <div className="flex items-center gap-3 text-xs">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-success/10 border border-success/20">
+              <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
+              <span className="text-success font-medium">Bids</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-destructive/10 border border-destructive/20">
+              <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+              <span className="text-destructive font-medium">Asks</span>
+            </div>
           </div>
         </div>
+        
+        <ReactApexChart options={options} series={series} type="area" height={300} />
       </div>
-      
-      <ReactApexChart options={options} series={series} type="area" height={300} />
     </div>
   );
 }

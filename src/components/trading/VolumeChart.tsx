@@ -1,5 +1,6 @@
 import ReactApexChart from 'react-apexcharts';
 import { ApexOptions } from 'apexcharts';
+import { Activity } from 'lucide-react';
 
 interface VolumeChartProps {
   data: { x: number; y: number; color?: string }[];
@@ -77,14 +78,25 @@ export function VolumeChart({ data }: VolumeChartProps) {
   };
 
   return (
-    <div className="rounded-lg border border-border/50 bg-black/10 p-2">
-      <div className="mb-1 px-2 text-xs font-semibold text-muted-foreground">VOLUME</div>
-      <ReactApexChart
-        options={options}
-        series={[{ name: 'Volume', data }]}
-        type="bar"
-        height={100}
-      />
+    <div className="relative rounded-xl border border-border/50 bg-gradient-to-br from-card/50 to-card/30 p-4 overflow-hidden">
+      <div className="absolute top-0 left-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
+      <div className="relative z-10">
+        <div className="mb-2 flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-primary/10">
+            <Activity className="w-3.5 h-3.5 text-primary" />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-foreground">TRADING VOLUME</div>
+            <div className="text-[10px] text-muted-foreground">Real-time activity</div>
+          </div>
+        </div>
+        <ReactApexChart
+          options={options}
+          series={[{ name: 'Volume', data }]}
+          type="bar"
+          height={100}
+        />
+      </div>
     </div>
   );
 }
