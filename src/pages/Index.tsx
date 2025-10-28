@@ -42,7 +42,8 @@ import { SocialTrading } from '@/components/trading/SocialTrading';
 import { AutoTradingSignals } from '@/components/trading/AutoTradingSignals';
 import { MultiChartLayout } from '@/components/trading/MultiChartLayout';
 import { AdvancedOrderTypes } from '@/components/trading/AdvancedOrderTypes';
-import { Exchange, DataSource, IndicatorSettings, Timeframe } from '@/types/trading';
+import { MarketSelector } from '@/components/trading/MarketSelector';
+import { Exchange, DataSource, IndicatorSettings, Timeframe, AssetType } from '@/types/trading';
 import { getExchangeDefaults } from '@/lib/exchanges';
 import { useTradingData } from '@/hooks/useTradingData';
 import { detectCandlestickPatterns } from '@/lib/indicators';
@@ -95,6 +96,7 @@ const Index = () => {
   );
   const [previousPrice, setPreviousPrice] = useState<number | null>(null);
   const [symbols, setSymbols] = useState<string[]>([]);
+  const [assetType, setAssetType] = useState<AssetType>('crypto');
   
   const [indicatorSettings, setIndicatorSettings] = useState<IndicatorSettings>({
     showSMA: true,
@@ -308,7 +310,19 @@ const Index = () => {
           <aside className="glass-panel space-y-4 rounded-2xl p-5 shadow-2xl transition-all duration-300 hover:shadow-primary/10 animate-slide-in-right">
             <BuyOmni99 />
             <WalletButton />
-            <OrderPanel symbol={symbol} currentPrice={lastPrice} />
+            <MarketSelector 
+              onSelectSymbol={(sym, type) => {
+                setSymbol(sym.toLowerCase());
+                setAssetType(type);
+              }} 
+              selectedSymbol={symbol}
+            />
+            <OrderPanel 
+              symbol={symbol} 
+              currentPrice={lastPrice} 
+              assetType={assetType}
+              exchange={exchange}
+            />
             <AdvancedOrderTypes />
             <PortfolioTracker />
             <AutoTradingSignals />

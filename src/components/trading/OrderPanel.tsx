@@ -1,20 +1,29 @@
-import { useState } from 'react';
-import { ShoppingCart, TrendingUp, TrendingDown, Zap, Shield } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ShoppingCart, TrendingUp, TrendingDown, Zap, Shield, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { AssetType, MarketType } from '@/types/trading';
 
 interface OrderPanelProps {
   symbol?: string;
   currentPrice?: number;
+  assetType?: AssetType;
+  exchange?: string;
 }
 
-export const OrderPanel = ({ symbol = 'BTC', currentPrice = 0 }: OrderPanelProps) => {
-  const [orderType, setOrderType] = useState('limit');
+export const OrderPanel = ({ 
+  symbol = 'BTCUSDT', 
+  currentPrice = 0,
+  assetType = 'crypto',
+  exchange = 'BINANCE'
+}: OrderPanelProps) => {
+  const [orderType, setOrderType] = useState('market');
   const [side, setSide] = useState<'buy' | 'sell'>('buy');
   const [price, setPrice] = useState('');
   const [quantity, setQuantity] = useState('');
@@ -22,6 +31,38 @@ export const OrderPanel = ({ symbol = 'BTC', currentPrice = 0 }: OrderPanelProps
   const [stopLoss, setStopLoss] = useState('');
   const [takeProfit, setTakeProfit] = useState('');
   const [loading, setLoading] = useState(false);
+  const [feeData, setFeeData] = useState<any>(null);
+
+  // Fetch trading fees
+  useEffect(() => {
+    const fetchFees = async () => {
+      const { data } = await supabase
+        .from('trading_fees')
+        .select('*')
+        .eq('asset_type', assetType)
+        .eq('active', true)
+        .maybeSingle();
+      
+      setFeeData(data);
+    };
+    
+    fetchFees();
+  }, [assetType]);
+
+  // Calculate fees
+  const calculateFees = () => {
+    if (!feeData || !quantity || !currentPrice) return { tradingFee: 0, commission: 0, total: 0, notionalValue: 0 };
+    
+    const qty = parseFloat(quantity);
+    const orderPrice = orderType === 'market' ? currentPrice : (parseFloat(price) || currentPrice);
+    const notionalValue = qty * orderPrice;
+    
+    const tradingFee = notionalValue * (orderType === 'market' ? feeData.taker_fee : feeData.maker_fee);
+    const commission = notionalValue * feeData.platform_commission_rate;
+    const total = notionalValue + tradingFee + commission;
+    
+    return { tradingFee, commission, total, notionalValue };
+  };
 
   const placeOrder = async () => {
     if (orderType !== 'market' && (!price || parseFloat(price) <= 0)) {
@@ -46,8 +87,9 @@ export const OrderPanel = ({ symbol = 'BTC', currentPrice = 0 }: OrderPanelProps
       const orderPrice = orderType === 'market' ? currentPrice : parseFloat(price);
       const orderQuantity = parseFloat(quantity);
       const orderLeverage = parseInt(leverage) || 1;
+      const fees = calculateFees();
 
-      // Create order
+      // Create order with fees
       const { data: order, error: orderError } = await supabase
         .from('trading_orders')
         .insert({
@@ -60,6 +102,12 @@ export const OrderPanel = ({ symbol = 'BTC', currentPrice = 0 }: OrderPanelProps
           leverage: orderLeverage,
           status: orderType === 'market' ? 'filled' : 'pending',
           filled_quantity: orderType === 'market' ? orderQuantity : 0,
+          asset_type: assetType,
+          market_type: 'spot' as MarketType,
+          exchange,
+          trading_fee: fees.tradingFee,
+          commission_fee: fees.commission,
+          total_cost: fees.total,
         })
         .select()
         .single();
@@ -81,12 +129,28 @@ export const OrderPanel = ({ symbol = 'BTC', currentPrice = 0 }: OrderPanelProps
             stop_loss: stopLoss ? parseFloat(stopLoss) : null,
             take_profit: takeProfit ? parseFloat(takeProfit) : null,
             status: 'open',
+            asset_type: assetType,
+            market_type: 'spot' as MarketType,
+            exchange,
+            total_fees: fees.tradingFee + fees.commission,
+            commission_paid: fees.commission,
           });
 
         if (positionError) throw positionError;
 
+        // Record commission earning
+        if (fees.commission > 0) {
+          await supabase.from('commission_earnings').insert({
+            user_id: user.id,
+            order_id: order.id,
+            amount: fees.commission,
+            asset_type: assetType,
+            symbol,
+          });
+        }
+
         toast.success(`${side.toUpperCase()} position opened!`, {
-          description: `${quantity} ${symbol} @ $${orderPrice.toFixed(2)}`,
+          description: `${quantity} ${symbol} @ $${orderPrice.toFixed(2)} | Fee: $${fees.tradingFee.toFixed(2)}`,
         });
       } else {
         toast.success(`${side.toUpperCase()} ${orderType} order placed!`, {
@@ -108,6 +172,8 @@ export const OrderPanel = ({ symbol = 'BTC', currentPrice = 0 }: OrderPanelProps
     }
   };
 
+  const fees = calculateFees();
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -117,12 +183,17 @@ export const OrderPanel = ({ symbol = 'BTC', currentPrice = 0 }: OrderPanelProps
           </div>
           <div>
             <h3 className="text-sm font-black text-foreground uppercase tracking-wide">Order Execution</h3>
-            <p className="text-[9px] text-muted-foreground font-mono">Elite Trading Interface</p>
+            <p className="text-[9px] text-muted-foreground font-mono">Multi-Asset Trading</p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <Zap className="w-3 h-3 text-primary animate-pulse" />
-          <span className="text-[10px] font-mono font-bold text-primary">ACTIVE</span>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-[10px] font-mono">
+            {assetType.toUpperCase()}
+          </Badge>
+          <div className="flex items-center gap-1.5">
+            <Zap className="w-3 h-3 text-primary animate-pulse" />
+            <span className="text-[10px] font-mono font-bold text-primary">ACTIVE</span>
+          </div>
         </div>
       </div>
 
@@ -167,21 +238,6 @@ export const OrderPanel = ({ symbol = 'BTC', currentPrice = 0 }: OrderPanelProps
                 <SelectItem value="stop_loss">
                   <div className="flex items-center gap-2">
                     <span>🛡️ Stop Loss</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="stop_limit">
-                  <div className="flex items-center gap-2">
-                    <span>🎯 Stop Limit</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="trailing_stop">
-                  <div className="flex items-center gap-2">
-                    <span>📈 Trailing Stop</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="oco">
-                  <div className="flex items-center gap-2">
-                    <span>🔄 OCO Order</span>
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -245,6 +301,31 @@ export const OrderPanel = ({ symbol = 'BTC', currentPrice = 0 }: OrderPanelProps
             </Select>
           </div>
 
+          {/* Fee Display */}
+          {feeData && quantity && currentPrice > 0 && (
+            <div className="p-3 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-lg border border-primary/20 space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Order Value:</span>
+                <span className="text-foreground font-mono font-bold">${fees.notionalValue.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Trading Fee ({(feeData[orderType === 'market' ? 'taker_fee' : 'maker_fee'] * 100).toFixed(3)}%):</span>
+                <span className="text-foreground font-mono">${fees.tradingFee.toFixed(4)}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  Platform Commission ({(feeData.platform_commission_rate * 100).toFixed(3)}%):
+                  <Info className="w-3 h-3" />
+                </span>
+                <span className="text-primary font-mono">${fees.commission.toFixed(4)}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs font-bold pt-1.5 border-t border-primary/20">
+                <span>Total Cost:</span>
+                <span className="text-primary font-mono text-sm">${fees.total.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+
           {/* Advanced Risk Management */}
           <div className="space-y-3 p-4 rounded-xl bg-gradient-to-br from-muted/30 to-muted/10 border border-border/50 backdrop-blur-xl">
             <div className="flex items-center gap-2">
@@ -284,30 +365,16 @@ export const OrderPanel = ({ symbol = 'BTC', currentPrice = 0 }: OrderPanelProps
             </div>
 
             {/* Risk/Reward Display */}
-            {stopLoss && takeProfit && price && (
+            {stopLoss && takeProfit && (currentPrice || price) && (
               <div className="metric-card p-2.5 rounded-lg">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground font-medium">Risk/Reward</span>
                   <span className="font-mono font-bold text-primary">
-                    1:{((parseFloat(takeProfit) - parseFloat(price)) / (parseFloat(price) - parseFloat(stopLoss))).toFixed(2)}
+                    1:{((parseFloat(takeProfit) - (currentPrice || parseFloat(price))) / ((currentPrice || parseFloat(price)) - parseFloat(stopLoss))).toFixed(2)}
                   </span>
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Enhanced Total Display */}
-          <div className="data-panel p-4 rounded-xl border-primary/20 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent" />
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Order Total</span>
-                <span className="text-[10px] font-mono text-muted-foreground">USDT</span>
-              </div>
-              <div className="font-mono text-2xl font-black text-primary glow-text">
-                ${(parseFloat(price || '0') * parseFloat(quantity || '0')).toFixed(2)}
-              </div>
-            </div>
           </div>
 
           {/* Ultra-Elite Execution Button */}

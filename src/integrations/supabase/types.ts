@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      commission_earnings: {
+        Row: {
+          amount: number
+          asset_type: Database["public"]["Enums"]["asset_type"]
+          earned_at: string | null
+          id: string
+          order_id: string | null
+          position_id: string | null
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          asset_type: Database["public"]["Enums"]["asset_type"]
+          earned_at?: string | null
+          id?: string
+          order_id?: string | null
+          position_id?: string | null
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          asset_type?: Database["public"]["Enums"]["asset_type"]
+          earned_at?: string | null
+          id?: string
+          order_id?: string | null
+          position_id?: string | null
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_earnings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "trading_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_earnings_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "user_positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crypto_payments: {
         Row: {
           amount_crypto: number
@@ -56,6 +104,42 @@ export type Database = {
           user_id?: string
           verified_at?: string | null
           verified_by?: string | null
+        }
+        Relationships: []
+      }
+      market_data_sources: {
+        Row: {
+          active: boolean | null
+          api_endpoint: string | null
+          asset_type: Database["public"]["Enums"]["asset_type"]
+          created_at: string | null
+          id: string
+          name: string
+          rate_limit_per_minute: number | null
+          requires_api_key: boolean | null
+          websocket_endpoint: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          api_endpoint?: string | null
+          asset_type: Database["public"]["Enums"]["asset_type"]
+          created_at?: string | null
+          id?: string
+          name: string
+          rate_limit_per_minute?: number | null
+          requires_api_key?: boolean | null
+          websocket_endpoint?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          api_endpoint?: string | null
+          asset_type?: Database["public"]["Enums"]["asset_type"]
+          created_at?: string | null
+          id?: string
+          name?: string
+          rate_limit_per_minute?: number | null
+          requires_api_key?: boolean | null
+          websocket_endpoint?: string | null
         }
         Relationships: []
       }
@@ -143,12 +227,61 @@ export type Database = {
         }
         Relationships: []
       }
+      trading_fees: {
+        Row: {
+          active: boolean | null
+          asset_type: Database["public"]["Enums"]["asset_type"]
+          created_at: string | null
+          exchange: string | null
+          id: string
+          maker_fee: number
+          market_type: Database["public"]["Enums"]["market_type"]
+          max_fee: number | null
+          min_fee: number | null
+          platform_commission_rate: number
+          taker_fee: number
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          asset_type: Database["public"]["Enums"]["asset_type"]
+          created_at?: string | null
+          exchange?: string | null
+          id?: string
+          maker_fee?: number
+          market_type: Database["public"]["Enums"]["market_type"]
+          max_fee?: number | null
+          min_fee?: number | null
+          platform_commission_rate?: number
+          taker_fee?: number
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          asset_type?: Database["public"]["Enums"]["asset_type"]
+          created_at?: string | null
+          exchange?: string | null
+          id?: string
+          maker_fee?: number
+          market_type?: Database["public"]["Enums"]["market_type"]
+          max_fee?: number | null
+          min_fee?: number | null
+          platform_commission_rate?: number
+          taker_fee?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       trading_orders: {
         Row: {
+          asset_type: Database["public"]["Enums"]["asset_type"] | null
+          commission_fee: number | null
           created_at: string | null
+          exchange: string | null
           filled_quantity: number | null
           id: string
           leverage: number | null
+          market_type: Database["public"]["Enums"]["market_type"] | null
           order_type: string
           position_id: string | null
           price: number | null
@@ -156,14 +289,20 @@ export type Database = {
           side: string
           status: string | null
           symbol: string
+          total_cost: number | null
+          trading_fee: number | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          asset_type?: Database["public"]["Enums"]["asset_type"] | null
+          commission_fee?: number | null
           created_at?: string | null
+          exchange?: string | null
           filled_quantity?: number | null
           id?: string
           leverage?: number | null
+          market_type?: Database["public"]["Enums"]["market_type"] | null
           order_type: string
           position_id?: string | null
           price?: number | null
@@ -171,14 +310,20 @@ export type Database = {
           side: string
           status?: string | null
           symbol: string
+          total_cost?: number | null
+          trading_fee?: number | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          asset_type?: Database["public"]["Enums"]["asset_type"] | null
+          commission_fee?: number | null
           created_at?: string | null
+          exchange?: string | null
           filled_quantity?: number | null
           id?: string
           leverage?: number | null
+          market_type?: Database["public"]["Enums"]["market_type"] | null
           order_type?: string
           position_id?: string | null
           price?: number | null
@@ -186,6 +331,8 @@ export type Database = {
           side?: string
           status?: string | null
           symbol?: string
+          total_cost?: number | null
+          trading_fee?: number | null
           updated_at?: string | null
           user_id?: string
         }
@@ -201,12 +348,16 @@ export type Database = {
       }
       user_positions: {
         Row: {
+          asset_type: Database["public"]["Enums"]["asset_type"] | null
           closed_at: string | null
+          commission_paid: number | null
           created_at: string | null
           current_price: number | null
           entry_price: number
+          exchange: string | null
           id: string
           leverage: number | null
+          market_type: Database["public"]["Enums"]["market_type"] | null
           opened_at: string | null
           quantity: number
           realized_pnl: number | null
@@ -215,16 +366,21 @@ export type Database = {
           stop_loss: number | null
           symbol: string
           take_profit: number | null
+          total_fees: number | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          asset_type?: Database["public"]["Enums"]["asset_type"] | null
           closed_at?: string | null
+          commission_paid?: number | null
           created_at?: string | null
           current_price?: number | null
           entry_price: number
+          exchange?: string | null
           id?: string
           leverage?: number | null
+          market_type?: Database["public"]["Enums"]["market_type"] | null
           opened_at?: string | null
           quantity: number
           realized_pnl?: number | null
@@ -233,16 +389,21 @@ export type Database = {
           stop_loss?: number | null
           symbol: string
           take_profit?: number | null
+          total_fees?: number | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          asset_type?: Database["public"]["Enums"]["asset_type"] | null
           closed_at?: string | null
+          commission_paid?: number | null
           created_at?: string | null
           current_price?: number | null
           entry_price?: number
+          exchange?: string | null
           id?: string
           leverage?: number | null
+          market_type?: Database["public"]["Enums"]["market_type"] | null
           opened_at?: string | null
           quantity?: number
           realized_pnl?: number | null
@@ -251,6 +412,7 @@ export type Database = {
           stop_loss?: number | null
           symbol?: string
           take_profit?: number | null
+          total_fees?: number | null
           updated_at?: string | null
           user_id?: string
         }
@@ -280,22 +442,31 @@ export type Database = {
       user_watchlist: {
         Row: {
           added_at: string | null
+          asset_type: Database["public"]["Enums"]["asset_type"] | null
+          exchange: string | null
           id: string
           is_favorite: boolean | null
+          notes: string | null
           symbol: string
           user_id: string
         }
         Insert: {
           added_at?: string | null
+          asset_type?: Database["public"]["Enums"]["asset_type"] | null
+          exchange?: string | null
           id?: string
           is_favorite?: boolean | null
+          notes?: string | null
           symbol: string
           user_id: string
         }
         Update: {
           added_at?: string | null
+          asset_type?: Database["public"]["Enums"]["asset_type"] | null
+          exchange?: string | null
           id?: string
           is_favorite?: boolean | null
+          notes?: string | null
           symbol?: string
           user_id?: string
         }
@@ -326,6 +497,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      asset_type: "crypto" | "stock" | "forex" | "commodity" | "index"
+      market_type: "spot" | "futures" | "options" | "cfd"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -454,6 +627,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      asset_type: ["crypto", "stock", "forex", "commodity", "index"],
+      market_type: ["spot", "futures", "options", "cfd"],
     },
   },
 } as const
