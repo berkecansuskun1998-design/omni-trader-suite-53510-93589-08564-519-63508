@@ -105,9 +105,9 @@ export const PortfolioTracker = () => {
   const calculatePnLPercent = (pos: Position) => {
     const pnl = calculatePnL(pos);
     const cost = pos.entry * pos.quantity;
+    if (!isFinite(cost) || cost === 0) return 0;
     return (pnl / cost) * 100;
   };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -135,11 +135,11 @@ export const PortfolioTracker = () => {
   const avgPnL = totalPnL / positions.length;
   const bestPerformer = positions.reduce((best, pos) => 
     calculatePnLPercent(pos) > calculatePnLPercent(best) ? pos : best
-  );
+  , positions[0]);
   const worstPerformer = positions.reduce((worst, pos) => 
     calculatePnLPercent(pos) < calculatePnLPercent(worst) ? pos : worst
-  );
-
+  , positions[0]);
+  const roi = totalValue !== totalPnL ? (totalPnL / (totalValue - totalPnL)) * 100 : 0;
   return (
     <Tabs defaultValue="overview" className="space-y-4">
       <div className="flex items-center justify-between">
@@ -188,7 +188,7 @@ export const PortfolioTracker = () => {
               ${totalPnL.toFixed(2)}
             </div>
             <div className={`text-[10px] mt-1 ${totalPnL >= 0 ? 'text-success' : 'text-destructive'}`}>
-              {((totalPnL / (totalValue - totalPnL)) * 100).toFixed(2)}% ROI
+              {roi.toFixed(2)}% ROI
             </div>
           </div>
         </div>
