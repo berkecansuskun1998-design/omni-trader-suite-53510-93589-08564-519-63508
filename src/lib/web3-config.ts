@@ -2,7 +2,12 @@ import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { http, createConfig } from 'wagmi';
 import { mainnet, arbitrum, polygon, optimism, base, bsc } from 'wagmi/chains';
 
-export const projectId = 'demo-project-id';
+// Get project ID from environment variable
+export const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo-project-id';
+
+if (projectId === 'demo-project-id') {
+  console.warn('⚠️ Using demo WalletConnect project ID. Please set VITE_WALLETCONNECT_PROJECT_ID for production use.');
+}
 
 const metadata = {
   name: 'OMNI Trading Terminal',

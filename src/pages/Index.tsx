@@ -1,47 +1,13 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Navbar } from '@/components/navigation/Navbar';
 import { Header } from '@/components/trading/Header';
 import { ParticleBackground } from '@/components/effects/ParticleBackground';
-import { CryptoPayment } from '@/components/web3/CryptoPayment';
-import { SwapInterface } from '@/components/web3/SwapInterface';
-import { WalletButton } from '@/components/web3/WalletButton';
-import { Watchlist } from '@/components/trading/Watchlist';
-import { PriceDisplay } from '@/components/trading/PriceDisplay';
-import { TradeFeed } from '@/components/trading/TradeFeed';
-import { IndicatorControls } from '@/components/trading/IndicatorControls';
-import { Terminal } from '@/components/trading/Terminal';
-import { OptimizedChart } from '@/components/trading/OptimizedChart';
-import { OrderBook } from '@/components/trading/OrderBook';
-import { NewsFeed } from '@/components/trading/NewsFeed';
-import { MarketSummary } from '@/components/trading/MarketSummary';
-import { PerformanceMetrics } from '@/components/trading/PerformanceMetrics';
-import { VolumeChart } from '@/components/trading/VolumeChart';
-import { TradingSignals } from '@/components/trading/TradingSignals';
-import { DepthChart } from '@/components/trading/DepthChart';
-import { QuickStats } from '@/components/trading/QuickStats';
-import { TimeframeSelector } from '@/components/trading/TimeframeSelector';
-import { CandlestickPatterns } from '@/components/trading/CandlestickPatterns';
-import { RealHeatmap } from '@/components/trading/RealHeatmap';
-import { BuyOmni99 } from '@/components/tokens/BuyOmni99';
 import { AdminPanel } from '@/components/admin/AdminPanel';
-import { PriceAlerts } from '@/components/trading/PriceAlerts';
-import { RiskCalculator } from '@/components/trading/RiskCalculator';
-import { EconomicCalendar } from '@/components/trading/EconomicCalendar';
-import { MarketSentiment } from '@/components/trading/MarketSentiment';
-import { PortfolioTracker } from '@/components/trading/PortfolioTracker';
-import { MarketScanner } from '@/components/trading/MarketScanner';
-import { OrderPanel } from '@/components/trading/OrderPanel';
-import { LiquidityZones } from '@/components/trading/LiquidityZones';
-import { HotkeyPanel } from '@/components/trading/HotkeyPanel';
-import { TradeJournal } from '@/components/trading/TradeJournal';
-import { DrawingTools } from '@/components/trading/DrawingTools';
-import { SocialTrading } from '@/components/trading/SocialTrading';
-import { AutoTradingSignals } from '@/components/trading/AutoTradingSignals';
-import { MultiChartLayout } from '@/components/trading/MultiChartLayout';
-import { AdvancedOrderTypes } from '@/components/trading/AdvancedOrderTypes';
-import { MarketSelector } from '@/components/trading/MarketSelector';
+import { LeftSidebar } from '@/components/sidebars/LeftSidebar';
+import { RightSidebar } from '@/components/sidebars/RightSidebar';
+import { MainChartArea } from '@/components/chart/MainChartArea';
 import { Exchange, DataSource, IndicatorSettings, Timeframe, AssetType } from '@/types/trading';
 import { getExchangeDefaults } from '@/lib/exchanges';
 import { useTradingData } from '@/hooks/useTradingData';
@@ -218,123 +184,45 @@ const Index = () => {
             />
           </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[380px_1fr_380px]">
-          {/* Left Sidebar */}
-          <aside className="glass-panel space-y-4 rounded-2xl p-5 shadow-2xl transition-all duration-300 hover:shadow-primary/10 animate-fade-in-up">
-            <Watchlist
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[380px_1fr_380px]">
+            <LeftSidebar
               symbols={symbols}
               activeSymbol={symbol}
+              timeframe={timeframe}
+              indicatorSettings={indicatorSettings}
+              detectedPatterns={detectedPatterns}
+              candles={candles}
+              lastPrice={lastPrice}
+              logs={logs}
               onSymbolClick={handleSymbolChange}
-            />
-            
-            <TimeframeSelector
-              selected={timeframe}
-              onChange={setTimeframe}
-            />
-            
-            <MultiChartLayout />
-            
-            <DrawingTools />
-            
-            <IndicatorControls
-              settings={indicatorSettings}
-              onApply={handleApplyIndicators}
+              onTimeframeChange={setTimeframe}
+              onApplyIndicators={handleApplyIndicators}
             />
 
-            {indicatorSettings.showPatterns && (
-              <CandlestickPatterns patterns={detectedPatterns} />
-            )}
-
-            <PerformanceMetrics
+            <MainChartArea
+              symbol={symbol}
+              exchange={exchange}
+              source={source}
               candles={candles}
-              currentPrice={lastPrice}
-              symbol={symbol}
-            />
-
-            <QuickStats symbol={symbol} price={lastPrice} />
-
-            <TradingSignals candles={candles} symbol={symbol} />
-
-            <Terminal logs={logs} />
-          </aside>
-
-          {/* Main Chart Area */}
-          <main className="glass-panel space-y-4 rounded-2xl p-5 shadow-2xl animate-scale-in gradient-glow">
-            <RealHeatmap />
-            
-            <PriceDisplay
-              symbol={symbol}
-              price={lastPrice}
+              trades={trades}
+              lastPrice={lastPrice}
               previousPrice={previousPrice}
-              source={source.toUpperCase()}
+              indicatorSettings={indicatorSettings}
             />
 
-            <OptimizedChart
-              candles={candles}
-              showSMA={indicatorSettings.showSMA}
-              showEMA={indicatorSettings.showEMA}
-              showRSI={indicatorSettings.showRSI}
-              showMACD={indicatorSettings.showMACD}
-              showBB={indicatorSettings.showBB}
-              showFib={indicatorSettings.showFib}
-              smaPeriod={indicatorSettings.smaPeriod}
-              emaPeriod={indicatorSettings.emaPeriod}
-              rsiPeriod={indicatorSettings.rsiPeriod}
+            <RightSidebar
               symbol={symbol}
-            />
-
-            <VolumeChart
-              data={candles.map((c) => ({
-                x: c.x,
-                y: (c.y[1] - c.y[2]) * Math.random() * 1000,
-              }))}
-            />
-
-            <DepthChart exchange={exchange} symbol={symbol} />
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <TradeFeed trades={trades} />
-              <OrderBook exchange={exchange} symbol={symbol} lastPrice={lastPrice} />
-            </div>
-          </main>
-
-          {/* Right Sidebar */}
-          <aside className="glass-panel space-y-4 rounded-2xl p-5 shadow-2xl transition-all duration-300 hover:shadow-primary/10 animate-slide-in-right">
-            <BuyOmni99 />
-            <WalletButton />
-            <MarketSelector 
+              exchange={exchange}
+              currentPrice={lastPrice}
+              assetType={assetType}
               onSelectSymbol={(sym, type) => {
                 setSymbol(sym.toLowerCase());
                 setAssetType(type);
-              }} 
-              selectedSymbol={symbol}
+              }}
             />
-            <OrderPanel 
-              symbol={symbol} 
-              currentPrice={lastPrice} 
-              assetType={assetType}
-              exchange={exchange}
-            />
-            <AdvancedOrderTypes />
-            <PortfolioTracker />
-            <AutoTradingSignals />
-            <SocialTrading />
-            <MarketScanner />
-            <MarketSentiment />
-            <PriceAlerts />
-            <RiskCalculator />
-            <LiquidityZones />
-            <EconomicCalendar />
-            <HotkeyPanel />
-            <TradeJournal />
-            <SwapInterface />
-            <CryptoPayment />
-            <MarketSummary exchange={exchange} symbol={symbol} />
-            <NewsFeed />
-          </aside>
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 };

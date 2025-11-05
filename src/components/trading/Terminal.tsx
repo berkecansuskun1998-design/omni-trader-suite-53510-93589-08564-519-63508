@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, memo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface TerminalProps {
   logs: Array<{ message: string; level: 'info' | 'warn' | 'error'; timestamp: Date }>;
 }
 
-export function Terminal({ logs }: TerminalProps) {
+export const Terminal = memo(({ logs }: TerminalProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -71,4 +71,6 @@ export function Terminal({ logs }: TerminalProps) {
       </div>
     </div>
   );
-}
+});
+
+Terminal.displayName = 'Terminal';
