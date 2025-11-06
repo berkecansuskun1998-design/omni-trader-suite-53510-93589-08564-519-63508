@@ -167,7 +167,7 @@ const ModernLoginScreen: React.FC<ModernLoginScreenProps> = ({ onLogin, isLoadin
                         "w-12 h-12 rounded-xl bg-gradient-to-r flex items-center justify-center",
                         features[currentSlide].color
                       )}>
-                        <features[currentSlide].icon className="h-6 w-6 text-white" />
+                        {React.createElement(features[currentSlide].icon, { className: "h-6 w-6 text-white" })}
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold text-white mb-2">
@@ -208,7 +208,7 @@ const ModernLoginScreen: React.FC<ModernLoginScreenProps> = ({ onLogin, isLoadin
                 transition={{ delay: 0.5 + index * 0.1 }}
                 className="text-center p-4 bg-black/20 rounded-xl border border-white/10"
               >
-                <stat.icon className="h-6 w-6 text-purple-400 mx-auto mb-2" />
+                {React.createElement(stat.icon, { className: "h-6 w-6 text-purple-400 mx-auto mb-2" })}
                 <p className="text-2xl font-bold text-white">{stat.value}</p>
                 <p className="text-sm text-gray-400">{stat.label}</p>
               </motion.div>

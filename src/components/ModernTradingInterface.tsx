@@ -187,7 +187,7 @@ const ModernTradingInterface: React.FC<ModernTradingInterfaceProps> = ({ user, o
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <tab.icon className="h-5 w-5" />
+                      {React.createElement(tab.icon, { className: "h-5 w-5" })}
                       <span className="font-medium">{tab.label}</span>
                       {activeTab === tab.id && (
                         <ChevronRight className="h-4 w-4 ml-auto" />

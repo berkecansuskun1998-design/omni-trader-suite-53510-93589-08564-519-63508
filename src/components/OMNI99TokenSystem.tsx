@@ -323,7 +323,7 @@ const OMNI99TokenSystem: React.FC<OMNI99TokenSystemProps> = ({ user }) => {
                     className="flex items-start space-x-3 p-3 bg-white/5 rounded-lg"
                   >
                     <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                      <benefit.icon className="h-5 w-5 text-white" />
+                      {React.createElement(benefit.icon, { className: "h-5 w-5 text-white" })}
                     </div>
                     <div>
                       <h4 className="font-semibold text-white">{benefit.title}</h4>
@@ -376,7 +376,7 @@ const OMNI99TokenSystem: React.FC<OMNI99TokenSystemProps> = ({ user }) => {
                     )}
                   </div>
                   <div className="flex items-center space-x-2">
-                    <StatusIcon className={cn("h-4 w-4", getStatusColor(tx.status))} />
+                    {React.createElement(StatusIcon, { className: cn("h-4 w-4", getStatusColor(tx.status)) })}
                     <span className={cn("text-sm capitalize", getStatusColor(tx.status))}>
                       {tx.status}
                     </span>

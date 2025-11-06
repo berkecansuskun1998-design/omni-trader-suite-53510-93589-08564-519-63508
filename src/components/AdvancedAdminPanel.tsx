@@ -170,7 +170,7 @@ const AdvancedAdminPanel: React.FC<AdvancedAdminPanelProps> = ({ user }) => {
             <Card className="bg-black/30 border-white/20 hover:bg-black/40 transition-all duration-200">
               <CardContent className="p-6">
                 <div className={cn("w-12 h-12 rounded-xl bg-gradient-to-r mb-4 flex items-center justify-center", stat.color)}>
-                  <stat.icon className="h-6 w-6 text-white" />
+                  {React.createElement(stat.icon, { className: "h-6 w-6 text-white" })}
                 </div>
                 <h3 className="text-sm font-medium text-gray-400 mb-1">{stat.title}</h3>
                 <p className="text-2xl font-bold text-white mb-1">{stat.value}</p>
@@ -340,7 +340,7 @@ const AdvancedAdminPanel: React.FC<AdvancedAdminPanelProps> = ({ user }) => {
                         </div>
                         
                         <Badge className={cn("px-2 py-1", getStatusColor(user.status))}>
-                          <StatusIcon className="h-3 w-3 mr-1" />
+                          {React.createElement(StatusIcon, { className: "h-3 w-3 mr-1" })}
                           {user.status}
                         </Badge>
                         
@@ -400,7 +400,7 @@ const AdvancedAdminPanel: React.FC<AdvancedAdminPanelProps> = ({ user }) => {
                       
                       <div className="flex items-center space-x-4">
                         <Badge className={cn("px-2 py-1", getStatusColor(request.status))}>
-                          <StatusIcon className="h-3 w-3 mr-1" />
+                          {React.createElement(StatusIcon, { className: "h-3 w-3 mr-1" })}
                           {request.status}
                         </Badge>
                         
