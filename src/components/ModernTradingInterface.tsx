@@ -27,6 +27,8 @@ import {
   EyeOff
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useRealBalance } from '@/hooks/useRealBalance';
+import { useRealMarketData } from '@/hooks/useRealMarketData';
 
 interface ModernTradingInterfaceProps {
   user: any;
@@ -37,8 +39,11 @@ const ModernTradingInterface: React.FC<ModernTradingInterfaceProps> = ({ user, o
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [notifications, setNotifications] = useState(3);
-  const [balance, setBalance] = useState({ demo: 99320.98, omni99: 0.00 });
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
+
+  // Real data hooks
+  const { balance, loading: balanceLoading, error: balanceError } = useRealBalance(user?.id);
+  const { marketData, loading: marketLoading, error: marketError, isConnected } = useRealMarketData();
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, color: 'from-blue-500 to-cyan-500' },
@@ -47,13 +52,6 @@ const ModernTradingInterface: React.FC<ModernTradingInterfaceProps> = ({ user, o
     { id: 'omni99', label: 'OMNI99', icon: Coins, color: 'from-orange-500 to-red-500' },
     { id: 'admin', label: 'Admin', icon: Shield, color: 'from-indigo-500 to-purple-500' },
     { id: 'settings', label: 'Settings', icon: Settings, color: 'from-gray-500 to-slate-500' }
-  ];
-
-  const marketData = [
-    { symbol: 'BTC/USDT', price: 67902.36, change: 2.45, volume: '1.2B' },
-    { symbol: 'ETH/USDT', price: 3379.01, change: -1.23, volume: '890M' },
-    { symbol: 'SOL/USDT', price: 158.15, change: 5.67, volume: '456M' },
-    { symbol: 'ADA/USDT', price: 0.534, change: -0.89, volume: '234M' }
   ];
 
   return (
@@ -124,8 +122,21 @@ const ModernTradingInterface: React.FC<ModernTradingInterfaceProps> = ({ user, o
                   <div>
                     <p className="text-xs text-gray-400">Total Balance</p>
                     <p className="text-sm font-bold text-white">
-                      {isBalanceVisible ? `$${balance.demo.toLocaleString()}` : '••••••'}
+                      {balanceLoading ? (
+                        <span className="animate-pulse">Loading...</span>
+                      ) : balanceError ? (
+                        <span className="text-red-400">Error</span>
+                      ) : isBalanceVisible ? (
+                        `$${balance.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      ) : (
+                        '••••••'
+                      )}
                     </p>
+                    {!balanceLoading && !balanceError && (
+                      <p className="text-xs text-purple-400">
+                        {balance.omni99.toLocaleString()} OMNI99
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -198,39 +209,78 @@ const ModernTradingInterface: React.FC<ModernTradingInterfaceProps> = ({ user, o
 
                 {/* Quick Stats */}
                 <div className="mt-8 space-y-4">
-                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
-                    Quick Stats
-                  </h3>
-                  {marketData.map((item, index) => (
-                    <motion.div
-                      key={item.symbol}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-white">{item.symbol}</p>
-                        <p className="text-xs text-gray-400">{item.volume}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-white">
-                          ${item.price.toLocaleString()}
-                        </p>
-                        <div className={cn(
-                          "flex items-center text-xs",
-                          item.change > 0 ? "text-green-400" : "text-red-400"
-                        )}>
-                          {item.change > 0 ? (
-                            <TrendingUp className="h-3 w-3 mr-1" />
-                          ) : (
-                            <TrendingDown className="h-3 w-3 mr-1" />
-                          )}
-                          {Math.abs(item.change)}%
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
+                      Live Market Data
+                    </h3>
+                    <div className={cn(
+                      "flex items-center text-xs",
+                      isConnected ? "text-green-400" : "text-red-400"
+                    )}>
+                      <div className={cn(
+                        "w-2 h-2 rounded-full mr-1",
+                        isConnected ? "bg-green-400 animate-pulse" : "bg-red-400"
+                      )} />
+                      {isConnected ? "Live" : "Disconnected"}
+                    </div>
+                  </div>
+                  {marketLoading ? (
+                    <div className="space-y-3">
+                      {[...Array(4)].map((_, i) => (
+                        <div key={i} className="animate-pulse p-3 bg-white/5 rounded-lg border border-white/10">
+                          <div className="flex justify-between">
+                            <div className="space-y-2">
+                              <div className="h-4 bg-gray-600 rounded w-20"></div>
+                              <div className="h-3 bg-gray-700 rounded w-12"></div>
+                            </div>
+                            <div className="space-y-2 text-right">
+                              <div className="h-4 bg-gray-600 rounded w-16"></div>
+                              <div className="h-3 bg-gray-700 rounded w-10"></div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                      ))}
+                    </div>
+                  ) : marketError ? (
+                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                      <p className="text-red-400 text-sm">Failed to load market data</p>
+                      <p className="text-red-300 text-xs mt-1">{marketError}</p>
+                    </div>
+                  ) : (
+                    marketData.map((item, index) => (
+                      <motion.div
+                        key={item.symbol}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-white">{item.symbol}</p>
+                          <p className="text-xs text-gray-400">{item.volume}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-white">
+                            ${item.price.toLocaleString(undefined, { 
+                              minimumFractionDigits: item.price < 1 ? 4 : 2,
+                              maximumFractionDigits: item.price < 1 ? 4 : 2
+                            })}
+                          </p>
+                          <div className={cn(
+                            "flex items-center text-xs",
+                            item.changePercent > 0 ? "text-green-400" : "text-red-400"
+                          )}>
+                            {item.changePercent > 0 ? (
+                              <TrendingUp className="h-3 w-3 mr-1" />
+                            ) : (
+                              <TrendingDown className="h-3 w-3 mr-1" />
+                            )}
+                            {Math.abs(item.changePercent).toFixed(2)}%
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                  )}
                 </div>
               </div>
             </motion.aside>
