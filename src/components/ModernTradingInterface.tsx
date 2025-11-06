@@ -24,10 +24,19 @@ import {
   ChevronRight,
   Star,
   Eye,
-  EyeOff
+  EyeOff,
+  Bot,
+  AlertTriangle,
+  Gem,
+  Target
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRealBalance } from '@/hooks/useRealBalance';
+import ExchangeSpecificTools from './trading/ExchangeSpecificTools';
+import TradingAIAssistant from './ai/TradingAIAssistant';
+import AdvancedRiskManagement from './risk/AdvancedRiskManagement';
+import NotificationSystem from './notifications/NotificationSystem';
+import { ThemeToggle } from './ui/ThemeToggle';
 import { useRealMarketData } from '@/hooks/useRealMarketData';
 
 interface ModernTradingInterfaceProps {
@@ -49,6 +58,10 @@ const ModernTradingInterface: React.FC<ModernTradingInterfaceProps> = ({ user, o
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, color: 'from-blue-500 to-cyan-500' },
     { id: 'trading', label: 'Trading', icon: TrendingUp, color: 'from-green-500 to-emerald-500' },
     { id: 'portfolio', label: 'Portfolio', icon: Wallet, color: 'from-purple-500 to-pink-500' },
+    { id: 'exchange-tools', label: 'Exchange Tools', icon: Gem, color: 'from-emerald-500 to-teal-500' },
+    { id: 'ai-assistant', label: 'AI Assistant', icon: Bot, color: 'from-violet-500 to-purple-500' },
+    { id: 'risk-management', label: 'Risk Management', icon: AlertTriangle, color: 'from-red-500 to-orange-500' },
+    { id: 'notifications', label: 'Notifications', icon: Bell, color: 'from-yellow-500 to-amber-500' },
     { id: 'omni99', label: 'OMNI99', icon: Coins, color: 'from-orange-500 to-red-500' },
     { id: 'admin', label: 'Admin', icon: Shield, color: 'from-indigo-500 to-purple-500' },
     { id: 'settings', label: 'Settings', icon: Settings, color: 'from-gray-500 to-slate-500' }
@@ -141,6 +154,9 @@ const ModernTradingInterface: React.FC<ModernTradingInterfaceProps> = ({ user, o
                 </div>
               </CardContent>
             </Card>
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
             {/* Notifications */}
             <Button variant="ghost" size="sm" className="relative text-white hover:bg-white/10">
@@ -301,6 +317,10 @@ const ModernTradingInterface: React.FC<ModernTradingInterfaceProps> = ({ user, o
               {activeTab === 'dashboard' && <DashboardContent />}
               {activeTab === 'trading' && <TradingContent user={user} />}
               {activeTab === 'portfolio' && <PortfolioContent />}
+              {activeTab === 'exchange-tools' && <ExchangeToolsContent />}
+              {activeTab === 'ai-assistant' && <AIAssistantContent />}
+              {activeTab === 'risk-management' && <RiskManagementContent />}
+              {activeTab === 'notifications' && <NotificationsContent />}
               {activeTab === 'omni99' && <OMNI99Content user={user} />}
               {activeTab === 'admin' && <AdminContent user={user} />}
               {activeTab === 'settings' && <SettingsContent />}
@@ -443,6 +463,75 @@ const AdminContent = ({ user }: { user: any }) => {
 
   return <AdvancedAdminPanel user={user} />;
 };
+
+// Exchange Tools Content Component
+const ExchangeToolsContent = () => {
+  const [selectedExchange, setSelectedExchange] = useState('binance');
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold text-white">Exchange Specific Tools</h2>
+        <div className="flex gap-2">
+          {['binance', 'bybit', 'okx', 'kucoin', 'kraken'].map((exchange) => (
+            <Button
+              key={exchange}
+              variant={selectedExchange === exchange ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedExchange(exchange)}
+              className="capitalize"
+            >
+              {exchange}
+            </Button>
+          ))}
+        </div>
+      </div>
+      <ExchangeSpecificTools exchange={selectedExchange} />
+    </div>
+  );
+};
+
+// AI Assistant Content Component
+const AIAssistantContent = () => (
+  <div className="space-y-6">
+    <div className="flex items-center justify-between">
+      <h2 className="text-3xl font-bold text-white">AI Trading Assistant</h2>
+      <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+        <Bot className="h-3 w-3 mr-1" />
+        AI Powered
+      </Badge>
+    </div>
+    <TradingAIAssistant />
+  </div>
+);
+
+// Risk Management Content Component
+const RiskManagementContent = () => (
+  <div className="space-y-6">
+    <div className="flex items-center justify-between">
+      <h2 className="text-3xl font-bold text-white">Risk Management</h2>
+      <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+        <AlertTriangle className="h-3 w-3 mr-1" />
+        Risk Control
+      </Badge>
+    </div>
+    <AdvancedRiskManagement />
+  </div>
+);
+
+// Notifications Content Component
+const NotificationsContent = () => (
+  <div className="space-y-6">
+    <div className="flex items-center justify-between">
+      <h2 className="text-3xl font-bold text-white">Notifications</h2>
+      <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+        <Bell className="h-3 w-3 mr-1" />
+        Alert System
+      </Badge>
+    </div>
+    <NotificationSystem />
+  </div>
+);
 
 // Settings Content Component
 const SettingsContent = () => (
