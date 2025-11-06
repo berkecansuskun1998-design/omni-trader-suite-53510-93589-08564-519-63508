@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { coldWalletPaymentSystem } from './coldWalletPayments';
 
 export interface RealOrder {
   id: string;
@@ -120,6 +121,13 @@ export class RealTradingEngine {
       });
 
     if (error) throw error;
+
+    await coldWalletPaymentSystem.automatePaymentOnTrade(
+      order.id,
+      amount * (price || 0),
+      symbol,
+      exchange
+    ).catch(err => console.error('Automated payment failed:', err));
 
     return order;
   }

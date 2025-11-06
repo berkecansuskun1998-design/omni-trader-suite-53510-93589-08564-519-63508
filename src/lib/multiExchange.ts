@@ -357,6 +357,12 @@ export class CMEMultiTool implements UnifiedExchangeInterface {
   }
 }
 
+import { KrakenMultiTool } from './exchanges/kraken';
+import { BybitMultiTool } from './exchanges/bybit';
+import { GateioMultiTool } from './exchanges/gateio';
+import { HuobiMultiTool } from './exchanges/huobi';
+import { BitfinexMultiTool } from './exchanges/bitfinex';
+
 export class MultiExchangeManager {
   private exchanges: Map<string, UnifiedExchangeInterface> = new Map();
 
@@ -365,6 +371,11 @@ export class MultiExchangeManager {
     this.exchanges.set('coinbase', new CoinbaseMultiTool());
     this.exchanges.set('okx', new OKXMultiTool());
     this.exchanges.set('kucoin', new KuCoinMultiTool());
+    this.exchanges.set('kraken', new KrakenMultiTool());
+    this.exchanges.set('bybit', new BybitMultiTool());
+    this.exchanges.set('gateio', new GateioMultiTool());
+    this.exchanges.set('huobi', new HuobiMultiTool());
+    this.exchanges.set('bitfinex', new BitfinexMultiTool());
     this.exchanges.set('nyse', new NYSEMultiTool());
     this.exchanges.set('nasdaq', new NASDAQMultiTool());
     this.exchanges.set('forex', new ForexMultiTool());

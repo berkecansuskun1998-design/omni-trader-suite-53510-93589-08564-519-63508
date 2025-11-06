@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense, lazy, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Navbar } from '@/components/navigation/Navbar';
@@ -15,6 +15,12 @@ import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const AdminPanel = lazy(() => import('@/components/admin/AdminPanel').then(m => ({ default: m.AdminPanel })));
+
+const MemoizedNavbar = memo(Navbar);
+const MemoizedHeader = memo(Header);
+const MemoizedLeftSidebar = memo(LeftSidebar);
+const MemoizedRightSidebar = memo(RightSidebar);
+const MemoizedMainChartArea = memo(MainChartArea);
 
 const Index = () => {
   const navigate = useNavigate();
@@ -154,7 +160,7 @@ const Index = () => {
   if (showAdminPanel && isAdmin) {
     return (
       <>
-        <Navbar onAdminClick={() => setShowAdminPanel(false)} isAdmin={isAdmin} />
+        <MemoizedNavbar onAdminClick={() => setShowAdminPanel(false)} isAdmin={isAdmin} />
         <div className="relative min-h-screen pt-24 p-4 animate-fade-in">
           <ParticleBackground />
           <div className="relative z-10 mx-auto max-w-[1800px] space-y-4">
@@ -171,12 +177,12 @@ const Index = () => {
 
   return (
     <>
-      <Navbar onAdminClick={() => setShowAdminPanel(true)} isAdmin={isAdmin} />
+      <MemoizedNavbar onAdminClick={() => setShowAdminPanel(true)} isAdmin={isAdmin} />
       <div className="relative min-h-screen pt-24 p-4 animate-fade-in">
         <ParticleBackground />
         <div className="relative z-10 mx-auto max-w-[1800px] space-y-4">
           <div className="glass-panel-strong rounded-2xl p-4 neon-border-strong animate-slide-fade-down">
-            <Header
+            <MemoizedHeader
               exchange={exchange}
               symbol={symbol}
               source={source}
@@ -189,7 +195,7 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[380px_1fr_380px]">
-            <LeftSidebar
+            <MemoizedLeftSidebar
               symbols={symbols}
               activeSymbol={symbol}
               timeframe={timeframe}
@@ -203,7 +209,7 @@ const Index = () => {
               onApplyIndicators={handleApplyIndicators}
             />
 
-            <MainChartArea
+            <MemoizedMainChartArea
               symbol={symbol}
               exchange={exchange}
               source={source}
@@ -214,7 +220,7 @@ const Index = () => {
               indicatorSettings={indicatorSettings}
             />
 
-            <RightSidebar
+            <MemoizedRightSidebar
               symbol={symbol}
               exchange={exchange}
               currentPrice={lastPrice}

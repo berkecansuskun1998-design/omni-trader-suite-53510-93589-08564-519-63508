@@ -18,12 +18,41 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
-          'vendor-charts': ['apexcharts', 'react-apexcharts', 'recharts'],
-          'vendor-web3': ['wagmi', 'viem', '@web3modal/wagmi'],
-          'vendor-query': ['@tanstack/react-query'],
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'vendor-react';
+            }
+            if (id.includes('@radix-ui')) {
+              return 'vendor-ui';
+            }
+            if (id.includes('apexcharts') || id.includes('recharts')) {
+              return 'vendor-charts';
+            }
+            if (id.includes('wagmi') || id.includes('viem') || id.includes('@web3modal')) {
+              return 'vendor-web3';
+            }
+            if (id.includes('@tanstack/react-query')) {
+              return 'vendor-query';
+            }
+            if (id.includes('framer-motion')) {
+              return 'vendor-animation';
+            }
+            if (id.includes('ccxt')) {
+              return 'vendor-exchange';
+            }
+            return 'vendor-other';
+          }
+          
+          if (id.includes('/src/components/trading/')) {
+            return 'trading-components';
+          }
+          if (id.includes('/src/lib/exchanges/')) {
+            return 'exchange-adapters';
+          }
+          if (id.includes('/src/components/ui/')) {
+            return 'ui-components';
+          }
         },
       },
     },
@@ -33,8 +62,14 @@ export default defineConfig(({ mode }) => ({
       compress: {
         drop_console: mode === 'production',
         drop_debugger: mode === 'production',
+        pure_funcs: mode === 'production' ? ['console.log', 'console.info'] : [],
+      },
+      mangle: {
+        safari10: true,
       },
     },
+    chunkSizeWarningLimit: 1000,
+    reportCompressedSize: false,
   },
   optimizeDeps: {
     esbuildOptions: {
